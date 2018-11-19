@@ -603,6 +603,7 @@ namespace ImGuizmo
    static const float quadUV[8] = { quadMin, quadMin, quadMin, quadMax, quadMax, quadMax, quadMax, quadMin };
    static const int halfCircleSegmentCount = 64;
    static const float snapTension = 0.5f;
+   static const bool mInvertY = false;
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
    //
@@ -616,7 +617,9 @@ namespace ImGuizmo
       trans.TransformPoint(worldPos, mat);
       trans *= 0.5f / trans.w;
       trans += makeVect(0.5f, 0.5f);
-      trans.y = 1.f - trans.y;
+      if (mInvertY) {
+         trans.y = 1.f - trans.y;
+      }
       trans.x *= gContext.mWidth;
       trans.y *= gContext.mHeight;
       trans.x += gContext.mX;
@@ -632,7 +635,12 @@ namespace ImGuizmo
       mViewProjInverse.Inverse(gContext.mViewMat * gContext.mProjectionMat);
 
       float mox = ((io.MousePos.x - gContext.mX) / gContext.mWidth) * 2.f - 1.f;
-      float moy = (1.f - ((io.MousePos.y - gContext.mY) / gContext.mHeight)) * 2.f - 1.f;
+      float moy;
+      if (mInvertY) {
+         moy = (1.f - ((io.MousePos.y - gContext.mY) / gContext.mHeight)) * 2.f - 1.f;
+      } else {
+         moy = ((io.MousePos.y - gContext.mY) / gContext.mHeight) * 2.f - 1.f;
+      }
 
       rayOrigin.Transform(makeVect(mox, moy, 0.f, 1.f), mViewProjInverse);
       rayOrigin *= 1.f / rayOrigin.w;
@@ -673,7 +681,7 @@ namespace ImGuizmo
       vec_t segB = pts[2] - pts[0];
       segA.y /= gContext.mDisplayRatio;
       segB.y /= gContext.mDisplayRatio;
-      vec_t segAOrtho = makeVect(-segA.y, segA.x);
+      vec_t segAOrtho = makeVect(-segA.y, segA.x);  // 90 degree rotation. Don't invert-or-not.
       segAOrtho.Normalize();
       float dt = segAOrtho.Dot3(segB);
       float surface = sqrtf(segA.x*segA.x + segA.y*segA.y) * fabsf(dt);
